@@ -1,12 +1,22 @@
-const { updatePageContent } = require('../models/pageModel');
-exports.setupSocket = (io) => {
+function setupSocket(io) {
+  const fileRooms = {}; // optional tracking
+
   io.on('connection', (socket) => {
-    socket.on('join', (room) => {
-      socket.join(room);
+    console.log('New client connected:', socket.id);
+
+    socket.on('join', ({ fileId }) => {
+      socket.join(fileId);
+      console.log(`User joined room: ${fileId}`);
     });
-    socket.on('contentChange', ({ room, content }) => {
-      socket.to(room).emit('contentUpdate', content);
-      updatePageContent(room, JSON.stringify(content), () => {});
+
+    socket.on('content-update', ({ fileId, html }) => {
+      socket.to(fileId).emit('content-update', { html });
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Client disconnected:', socket.id);
     });
   });
-};
+}
+
+module.exports = { setupSocket };

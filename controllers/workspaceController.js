@@ -1,24 +1,39 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
-const { createPage } = require('../models/pageModel');
+const axios = require("axios");
+const cheerio = require("cheerio");
+const {
+  createPage,
+  getPageData,
+} = require("../models/pageModel");
 
 exports.scrapeWebsite = async (req, res) => {
   const { url } = req.body;
   const userId = req.headers.userid;
+
   try {
     const { data } = await axios.get(url);
     const scappedData = cheerio.load(data);
-    const content = scappedData('body').html(); // or $('article').html()
+    const content = scappedData("body").html();
 
     if (!content) {
-      return res.status(404).json({ message: 'No content found' });
+      return res.status(404).json({ message: "No content found" });
     }
 
-    createPage(url, content, userId, (err) => {
-      if (err) return res.status(500).send(err);
-      res.json({ success: true, url });
-    });
+    const insertedId = await createPage(url, content, userId);
+
+    res.json({ success: true, data: content, content_id: insertedId });
   } catch (err) {
-    res.status(500).send('Scraping failed');
+    console.error("Scraping failed:", err);
+    res.status(500).send("Scraping failed");
+  }
+};
+exports.scrapeWebsiteList = async (req, res) => {
+  const userId = req.headers.userid;
+
+  try {
+    const data = await getPageData(userId);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Fetching page data failed:", err);
+    res.status(500).send("Scraping failed");
   }
 };
