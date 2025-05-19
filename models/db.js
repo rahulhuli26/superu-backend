@@ -4,6 +4,7 @@ require('dotenv').config();
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
+  port: process.env.DB_PORT,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   waitForConnections: true,
@@ -11,4 +12,12 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
+pool.getConnection((err, connection) => {
+  if (err) {
+    console.error('❌ Error connecting to MySQL:', err.message);
+  } else {
+    console.log('✅ MySQL DB connected successfully!');
+    connection.release(); // Release back to the pool
+  }
+});
 module.exports = pool.promise(); // use .promise() for async/await support
